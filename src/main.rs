@@ -46,8 +46,8 @@ async fn main() {
 // Handler per la Home Page
 async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let mut context = Context::new();
-    context.insert("nome_utente", "Sviluppatore Rust");
-
+    context.insert("nome_utente", "Mario");
+    context.insert("data", "21 Dicembre 2025");
     match state.templates.render("index.html", &context) {
         Ok(rendered) => Html(rendered).into_response(),
         Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Errore nel rendering").into_response(),

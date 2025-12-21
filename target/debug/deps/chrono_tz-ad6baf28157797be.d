@@ -1,0 +1,15 @@
+/home/carlo/casabaldini_ru/target/debug/deps/chrono_tz-ad6baf28157797be.d: /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/lib.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/binary_search.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/directory.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezone_impl.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezones.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/directory.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/timezones.rs
+
+/home/carlo/casabaldini_ru/target/debug/deps/libchrono_tz-ad6baf28157797be.rlib: /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/lib.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/binary_search.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/directory.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezone_impl.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezones.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/directory.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/timezones.rs
+
+/home/carlo/casabaldini_ru/target/debug/deps/libchrono_tz-ad6baf28157797be.rmeta: /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/lib.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/binary_search.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/directory.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezone_impl.rs /home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezones.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/directory.rs /home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/timezones.rs
+
+/home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/lib.rs:
+/home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/binary_search.rs:
+/home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/directory.rs:
+/home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezone_impl.rs:
+/home/carlo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-tz-0.9.0/src/timezones.rs:
+/home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/directory.rs:
+/home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out/timezones.rs:
+
+# env-dep:OUT_DIR=/home/carlo/casabaldini_ru/target/debug/build/chrono-tz-3a2fcaf99f190a11/out
