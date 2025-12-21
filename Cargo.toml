@@ -1,0 +1,12 @@
+[package]
+name = "casabaldini_ru"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+askama = "0.12"
+askama_axum = "0.4"
+tera = "1.19" # Il motore di template

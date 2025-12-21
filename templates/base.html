@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Il mio Sito{% endblock title %}</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
+        nav { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+        footer { margin-top: 50px; font-size: 0.8em; color: gray; }
+    </style>
+</head>
+<body>
+    <nav>
+        <strong>MioSito:</strong>
+        <a href="/">Home</a> | <a href="/about">About</a>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock content %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 - Creato con Rust e Tera</p>
+    </footer>
+</body>
+</html>
