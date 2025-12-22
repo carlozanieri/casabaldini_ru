@@ -1,65 +1,73 @@
-use axum::{
-    extract::State,
-    response::{Html, IntoResponse},
-    routing::get,
-    Router,
-};
-use std::sync::Arc;
+use axum::{extract::State, response::{Html, IntoResponse}, routing::get, Router};
+use rusqlite::{Connection, Result};
+use serde::Serialize;
+use std::sync::{Arc, Mutex};
 use tera::{Context, Tera};
 
-// Creiamo una struttura per lo stato condiviso dell'applicazione
+// Definiamo la struttura dati per la tabella
+#[derive(Serialize)]
+struct Utente {
+    id: i32,
+    nome: String,
+    email: String,
+}
+
 struct AppState {
     templates: Tera,
+    // Usiamo Mutex perché la connessione SQLite non è "Thread Safe" di natura
+    db_conn: Mutex<Connection>,
 }
 
 #[tokio::main]
 async fn main() {
-    // 1. Inizializziamo il motore di template caricando tutto dalla cartella /templates
-    let mut tera = match Tera::new("templates/**/*") {
-        Ok(t) => t,
-        Err(e) => {
-            println!("Errore nel parsing dei template: {}", e);
-            std::process::exit(1);
-        }
-    };
+    // 1. Inizializza SQLite e crea una tabella di prova
+    let conn = Connection::open_in_memory().expect("Errore apertura DB");
+    conn.execute(
+        "CREATE TABLE utenti (id INTEGER PRIMARY KEY, nome TEXT, email TEXT)",
+        (),
+    ).unwrap();
+    conn.execute("INSERT INTO utenti (nome, email) VALUES ('Mario Rossi', 'mario@example.com')", ()).unwrap();
+    conn.execute("INSERT INTO utenti (nome, email) VALUES ('Paola Bianchi', 'paola@example.com')", ()).unwrap();
 
-    // Disabilita l'auto-escape se necessario, ma di base Tera protegge da XSS
-    tera.full_reload().unwrap();
+    // 2. Inizializza Tera
+    let tera = Tera::new("templates/**/*").expect("Errore template");
 
-    // 2. Creiamo lo stato condiviso avvolto in un Arc (Atomic Reference Counter)
-    let shared_state = Arc::new(AppState { templates: tera });
+    let shared_state = Arc::new(AppState {
+        templates: tera,
+        db_conn: Mutex::new(conn),
+    });
 
-    // 3. Definiamo le rotte e passiamo lo stato
     let app = Router::new()
         .route("/", get(home_handler))
-        .route("/about", get(about_handler))
         .with_state(shared_state);
 
-    // 4. Avvio del server
-    let addr = "0.0.0.0:3000";
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    println!("🚀 Server in ascolto su http://{}", addr);
-
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    println!("Server attivo su http://localhost:3000");
     axum::serve(listener, app).await.unwrap();
 }
 
-// Handler per la Home Page
 async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // 3. Estraiamo i dati dal database
+    let conn = state.db_conn.lock().unwrap();
+    let mut stmt = conn.prepare("SELECT id, nome, email FROM utenti").unwrap();
+    
+    let utenti_iter = stmt.query_map([], |row| {
+        Ok(Utente {
+            id: row.get(0)?,
+            nome: row.get(1)?,
+            email: row.get(2)?,
+        })
+    }).unwrap();
+
+    let mut lista_utenti = Vec::new();
+    for utente in utenti_iter {
+        lista_utenti.push(utente.unwrap());
+    }
+
+    // 4. Passiamo la lista al template
     let mut context = Context::new();
-    context.insert("nome_utente", "Mario");
-    context.insert("data", "21 Dicembre 2025");
-    match state.templates.render("index.html", &context) {
-        Ok(rendered) => Html(rendered).into_response(),
-        Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Errore nel rendering").into_response(),
-    }
-}
+    context.insert("utenti", &lista_utenti);
 
-// Handler per la pagina About
-async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let context = Context::new(); // Pagina statica, contesto vuoto
-
-    match state.templates.render("about.html", &context) {
-        Ok(rendered) => Html(rendered).into_response(),
-        Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Errore nel rendering").into_response(),
-    }
+    let rendered = state.templates.render("index.html", &context).unwrap();
+    Html(rendered)
 }

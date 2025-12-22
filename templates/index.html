@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Home - {{ nome_utente }}{% endblock title %}
-
 {% block content %}
-    <h1>Benvenuto, {{ nome_utente }}!{{data}}</h1>
-    <p>Questa è la tua dashboard personalizzata.</p>
+    <h1>Lista Utenti dal Database</h1>
+    
+    <table border="1" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for utente in utenti %}
+            <tr>
+                <td>{{ utente.id }}</td>
+                <td>{{ utente.nome }}</td>
+                <td>{{ utente.email }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock content %}
