@@ -39,8 +39,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(home_handler))
+        .route("/about", get(about_handler))
         .with_state(shared_state);
 
+    
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
     println!("Server attivo su http://localhost:3000");
     axum::serve(listener, app).await.unwrap();
@@ -69,5 +71,31 @@ async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     context.insert("utenti", &lista_utenti);
 
     let rendered = state.templates.render("index.html", &context).unwrap();
+    Html(rendered)
+}
+
+async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // 3. Estraiamo i dati dal database
+    let conn = state.db_conn.lock().unwrap();
+    let mut stmt = conn.prepare("SELECT id, nome, email FROM utenti").unwrap();
+    
+    let utenti_iter = stmt.query_map([], |row| {
+        Ok(Utente {
+            id: row.get(0)?,
+            nome: row.get(1)?,
+            email: row.get(2)?,
+        })
+    }).unwrap();
+
+    let mut lista_utenti = Vec::new();
+    for utente in utenti_iter {
+        lista_utenti.push(utente.unwrap());
+    }
+
+    // 4. Passiamo la lista al template
+    let mut context = Context::new();
+    context.insert("utenti", &lista_utenti);
+
+    let rendered = state.templates.render("about.html", &context).unwrap();
     Html(rendered)
 }
