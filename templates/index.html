@@ -12,11 +12,11 @@
             </tr>
         </thead>
         <tbody>
-            {% for utente in utenti %}
+            {% for utente in links %}
             <tr>
                 <td>{{ utente.id }}</td>
-                <td>{{ utente.nome }}</td>
-                <td>{{ utente.email }}</td>
+                <td>{{ utente.titolo }}</td>
+                <td>{{ utente.descrizione }}</td>
             </tr>
             {% endfor %}
         </tbody>

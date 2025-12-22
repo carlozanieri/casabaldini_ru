@@ -1,17 +1,24 @@
 use axum::{extract::State, response::{Html, IntoResponse}, routing::get, Router};
-use rusqlite::{Connection, Result};
+use rusqlite::Connection;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use tera::{Context, Tera};
+use tower_http::services::ServeDir;
+//newuse
 
 // Definiamo la struttura dati per la tabella
 #[derive(Serialize)]
-struct Utente {
-    id: i32,
-    nome: String,
-    email: String,
+struct Links{
+	id:          i32,
+	codice:      String,
+	img:         String,
+	titolo:      String,
+	attivo:      i32,
+	descrizione: String,
+	link:        String,
+	height:      String,
+	width:       String,
 }
-
 struct AppState {
     templates: Tera,
     // Usiamo Mutex perché la connessione SQLite non è "Thread Safe" di natura
@@ -21,13 +28,16 @@ struct AppState {
 #[tokio::main]
 async fn main() {
     // 1. Inizializza SQLite e crea una tabella di prova
-    let conn = Connection::open_in_memory().expect("Errore apertura DB");
-    conn.execute(
-        "CREATE TABLE utenti (id INTEGER PRIMARY KEY, nome TEXT, email TEXT)",
-        (),
-    ).unwrap();
-    conn.execute("INSERT INTO utenti (nome, email) VALUES ('Mario Rossi', 'mario@example.com')", ()).unwrap();
-    conn.execute("INSERT INTO utenti (nome, email) VALUES ('Paola Bianchi', 'paola@example.com')", ()).unwrap();
+    let db_path = "casabaldini.sqlite";
+    let conn = Connection::open(db_path).expect("Impossibile trovare o aprire il file SQLite");
+
+    //let conn = Connection::open_in_memory().expect("Errore apertura DB");
+    //conn.execute(
+    //    "CREATE TABLE utenti (id INTEGER PRIMARY KEY, nome TEXT, email TEXT)",
+    //    (),
+    //).unwrap();
+    //conn.execute("INSERT INTO utenti (nome, email) VALUES ('Mario Rossi', 'mario@example.com')", ()).unwrap();
+    //conn.execute("INSERT INTO utenti (nome, email) VALUES ('Paola Bianchi', 'paola@example.com')", ()).unwrap();
 
     // 2. Inizializza Tera
     let tera = Tera::new("templates/**/*").expect("Errore template");
@@ -40,6 +50,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(home_handler))
         .route("/about", get(about_handler))
+        .nest_service("/static", ServeDir::new("static"))
         .with_state(shared_state);
 
     
@@ -51,24 +62,30 @@ async fn main() {
 async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // 3. Estraiamo i dati dal database
     let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, nome, email FROM utenti").unwrap();
+    let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
     
-    let utenti_iter = stmt.query_map([], |row| {
-        Ok(Utente {
+    let links_iter = stmt.query_map([], |row| {
+        Ok(Links {
             id: row.get(0)?,
-            nome: row.get(1)?,
-            email: row.get(2)?,
+            codice: row.get(1)?,
+            img: row.get(2)?,
+            titolo: row.get(3)?,
+            descrizione: row.get(4)?,
+            link: row.get(5)?,
+             attivo: row.get(6)?,
+            height: row.get(7)?,
+            width: row.get(8)?,
         })
     }).unwrap();
 
-    let mut lista_utenti = Vec::new();
-    for utente in utenti_iter {
-        lista_utenti.push(utente.unwrap());
+    let mut lista_links = Vec::new();
+    for links in links_iter {
+        lista_links.push(links.unwrap());
     }
 
     // 4. Passiamo la lista al template
     let mut context = Context::new();
-    context.insert("utenti", &lista_utenti);
+    context.insert("links", &lista_links);
 
     let rendered = state.templates.render("index.html", &context).unwrap();
     Html(rendered)
@@ -77,24 +94,29 @@ async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // 3. Estraiamo i dati dal database
     let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, nome, email FROM utenti").unwrap();
+    let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
     
-    let utenti_iter = stmt.query_map([], |row| {
-        Ok(Utente {
+    let links_iter = stmt.query_map([], |row| {
+        Ok(Links {
             id: row.get(0)?,
-            nome: row.get(1)?,
-            email: row.get(2)?,
+            codice: row.get(1)?,
+            img: row.get(2)?,
+            titolo: row.get(3)?,
+            descrizione: row.get(4)?,
+            link: row.get(5)?,
+            attivo: row.get(6)?,
+            height: row.get(7)?,
+            width: row.get(8)?,
         })
     }).unwrap();
 
-    let mut lista_utenti = Vec::new();
-    for utente in utenti_iter {
-        lista_utenti.push(utente.unwrap());
+    let mut lista_links = Vec::new();
+    for links in links_iter {
+        lista_links.push(links.unwrap());
     }
 
-    // 4. Passiamo la lista al template
     let mut context = Context::new();
-    context.insert("utenti", &lista_utenti);
+    context.insert("links", &lista_links);
 
     let rendered = state.templates.render("about.html", &context).unwrap();
     Html(rendered)

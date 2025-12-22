@@ -4,6 +4,23 @@
 
 {% block content %}
     <h1>Informazioni su di noi</h1>
-    <p>Siamo appassionati di Rust e sistemi web performanti.</p>
+   <table border="1" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for utente in links %}
+            <tr>
+                <td>{{ utente.id }}</td>
+                <td>{{ utente.titolo }}</td>
+                <td>{{ utente.descrizione }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock content %}
 
