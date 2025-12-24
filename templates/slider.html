@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+<meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/rust/style.css" />
+{% block title %}Chi Siamo{% endblock title %}
+
+{% block content %}
+<div class="slider-container">
+    <h1>I nostri B&B</h1>
+    <div class="slides">
+        {% for s in sliders %}
+        <div class="slide-card" style="border: 1px solid #ddd; margin-bottom: 20px; padding: 10px;">
+            <img src="/static/img/index/{{ s.img }}" alt="{{ s.titolo }}" style="max-width: 100%; height: auto;">
+            
+            <h2>{{ s.titolo }}</h2>
+            <h4>{{ s.caption }}</h4>
+            <p>{{ s.testo }}</p>
+            
+            {% if s.link %}
+                <a href="{{ s.link }}" class="btn">Scopri di più</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}
+

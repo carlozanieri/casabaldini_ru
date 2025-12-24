@@ -1,5 +1,6 @@
 use axum::{extract::State, response::{Html, IntoResponse}, routing::get, Router};
-use rusqlite::Connection;
+use rusqlite::{params, Connection, Result};
+//use rusqlite::{Connection, params};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use tera::{Context, Tera};
@@ -18,6 +19,17 @@ struct Links{
 	link:        String,
 	height:      String,
 	width:       String,
+}
+#[derive(serde:: Serialize)]
+struct BebSlider {
+     id: i64,
+     codice: String,
+     codice2: i64, // O String, a seconda del tuo DB
+     img: String,
+     titolo: String,
+     caption: String,
+     link: String,
+     testo: String,
 }
 struct AppState {
     templates: Tera,
@@ -50,6 +62,8 @@ async fn main() {
     let app = Router::new()
         .route("/", get(home_handler))
         .route("/about", get(about_handler))
+        .route("/slider", get(slider_handler))
+        .route("/lacasailpaese", get(lacasailpaese_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(shared_state);
 
@@ -91,7 +105,7 @@ async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     Html(rendered)
 }
 
-async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+async fn lacasailpaese_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // 3. Estraiamo i dati dal database
     let conn = state.db_conn.lock().unwrap();
     let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
@@ -104,7 +118,7 @@ async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse 
             titolo: row.get(3)?,
             descrizione: row.get(4)?,
             link: row.get(5)?,
-            attivo: row.get(6)?,
+             attivo: row.get(6)?,
             height: row.get(7)?,
             width: row.get(8)?,
         })
@@ -115,9 +129,100 @@ async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse 
         lista_links.push(links.unwrap());
     }
 
+    // 4. Passiamo la lista al template
+    let mut context = Context::new();
+    context.insert("links", &lista_links);
+
+    let rendered = state.templates.render("index.html", &context).unwrap();
+    Html(rendered)
+}
+async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // 3. Estraiamo i dati dal database
+    //let conn = state.db_conn.lock().unwrap();
+    
+let conn = state.db_conn.lock().unwrap();
+    let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
+    
+    let links_iter = stmt.query_map([], |row| {
+        Ok(Links {
+            id: row.get(0)?,
+            codice: row.get(1)?,
+            img: row.get(2)?,
+            titolo: row.get(3)?,
+            descrizione: row.get(4)?,
+            link: row.get(5)?,
+             attivo: row.get(6)?,
+            height: row.get(7)?,
+            width: row.get(8)?,
+        })
+    }).unwrap();
+        
+    let mut lista_links = Vec::new();
+    for links in links_iter {
+        lista_links.push(links.unwrap());
+    }
+
     let mut context = Context::new();
     context.insert("links", &lista_links);
 
     let rendered = state.templates.render("about.html", &context).unwrap();
     Html(rendered)
+}
+
+async fn slider_handler(
+    
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    //println!("--> Richiesta ricevuta su /slider");
+    let conn = state.db_conn.lock().unwrap();
+    let codice = "index"; // Potrebbe venire da un parametro URL
+
+    match get_slider_by_codice(&conn, &codice) {
+            Ok(lista) => {
+            
+            let mut ctx = Context::new();
+            ctx.insert("sliders", &lista);
+            Html(state.templates.render("slider.html", &ctx).unwrap()).into_response()
+        },
+        Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR).into_response()
+        
+    }
+}
+
+
+fn get_slider_by_codice(
+    conn: &Connection,
+    codice: &str,
+) -> Result<Vec<BebSlider>> {
+
+    let mut stmt = conn.prepare(
+        "SELECT id, codice, codice2, img, titolo, caption, link, testo
+         FROM beb_slider
+         WHERE codice = ?
+         ORDER BY codice2"
+    )?;
+
+    let iter = stmt.query_map([codice], |row| {
+        Ok(BebSlider {
+            id: row.get(0)?,
+            codice: row.get(1)?,
+            codice2: row.get(2)?,
+            img: row.get(3)?,
+            titolo: row.get(4)?,
+            caption: row.get(5)?,
+            link: row.get(6)?,
+            testo: row.get(7)?,
+        })
+        
+    })?;
+    println!("fuori -- ciclo for");
+    println!("{codice}");
+    //println!({BebSlider[1]});
+    let mut res = Vec::new();
+    for item in iter {
+        res.push(item?);
+        println!("ciclo for");
+    }
+
+    Ok(res)
 }
