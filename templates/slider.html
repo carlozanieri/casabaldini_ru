@@ -7,13 +7,13 @@
 <div class="slider-container">
     <h1>I nostri B&B</h1>
     <div class="slides">
-        {% for s in sliders %}
+        {% for s in links %}
         <div class="slide-card" style="border: 1px solid #ddd; margin-bottom: 20px; padding: 10px;">
             <img src="/static/img/index/{{ s.img }}" alt="{{ s.titolo }}" style="max-width: 100%; height: auto;">
             
             <h2>{{ s.titolo }}</h2>
-            <h4>{{ s.caption }}</h4>
-            <p>{{ s.testo }}</p>
+            <h4>{{ s.img }}</h4>
+            <p>{{ s.caption }}</p>
             
             {% if s.link %}
                 <a href="{{ s.link }}" class="btn">Scopri di più</a>
