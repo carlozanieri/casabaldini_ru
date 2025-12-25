@@ -32,6 +32,25 @@ struct Slider {
      link: String,
      testo: String,
 }
+/*#[derive(serde:: Serialize)]
+struct Submenus{
+	id:      i64,
+	codice:  String,
+	radice:  String,
+	livello: i64,
+	titolo:  String,
+	link:    String,
+}*/
+#[derive(serde:: Serialize)]
+struct Menus {
+	id:       i64,
+	codice:   String,
+	radice:   String,
+	livello:  i64,
+	titolo:   String,
+	link:     String,
+	
+}
 struct AppState {
     templates: Tera,
     // Usiamo Mutex perché la connessione SQLite non è "Thread Safe" di natura
@@ -63,7 +82,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(home_handler))
         .route("/about", get(about_handler))
-        //.route("/slider", get(slider_handler))
+        .route("/menu", get(menu_handler))
         .route("/lacasailpaese", get(lacasailpaese_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(shared_state);
@@ -112,7 +131,7 @@ async fn lacasailpaese_handler(State(state): State<Arc<AppState>>) -> impl IntoR
     let conn = state.db_conn.lock().unwrap();
     let mut stmt = conn.prepare("SELECT id, codice, codice2, img, titolo, caption, link, testo FROM beb_slider WHERE codice2 = :codice").unwrap();
     
-    let Slider_iter = stmt.query_map(named_params! { ":codice": codice }, |row| {
+    let slider_iter = stmt.query_map(named_params! { ":codice": codice }, |row| {
         Ok(Slider {
             id: row.get(0)?,
             codice: row.get(1)?,
@@ -126,7 +145,7 @@ async fn lacasailpaese_handler(State(state): State<Arc<AppState>>) -> impl IntoR
     }).unwrap();
 
     let mut lista_slider = Vec::new();
-    for slider in Slider_iter {
+    for slider in slider_iter {
         lista_slider.push(slider.unwrap());
     }
 
@@ -137,6 +156,37 @@ async fn lacasailpaese_handler(State(state): State<Arc<AppState>>) -> impl IntoR
     let rendered = state.templates.render("slider.html", &context).unwrap();
     Html(rendered)
 }
+
+async fn menu_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // 3. Estraiamo i dati dal database
+    //let codice = "lasala";
+    let conn = state.db_conn.lock().unwrap();
+    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM menu order by ordine").unwrap();
+    
+    let menus_iter = stmt.query_map([], |row| {
+        Ok(Menus {
+            id: row.get(0)?,
+            codice: row.get(1)?,
+            radice: row.get(2)?,
+            livello: row.get(3)?,
+            titolo: row.get(4)?,
+            link: row.get(5)?,
+            })
+    }).unwrap();
+
+    let mut lista_menu = Vec::new();
+    for menu in menus_iter {
+        lista_menu.push(menu.unwrap());
+    }
+
+    // 4. Passiamo la lista al template
+    let mut context = Context::new();
+    context.insert("menus", &lista_menu);
+
+    let rendered = state.templates.render("AceMenu.html", &context).unwrap();
+    Html(rendered)
+}
+
 async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // 3. Estraiamo i dati dal database
     //let conn = state.db_conn.lock().unwrap();
