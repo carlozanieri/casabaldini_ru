@@ -51,6 +51,16 @@ struct Menus {
 	link:     String,
 	
 }
+#[derive(Serialize)]
+struct Submenus{
+	id:       i64,
+	codice:   String,
+	radice:   String,
+	livello:  i64,
+	titolo:   String,
+	link:     String,
+	
+}
 struct AppState {
     templates: Tera,
     // Usiamo Mutex perché la connessione SQLite non è "Thread Safe" di natura
@@ -161,7 +171,7 @@ async fn menu_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // 3. Estraiamo i dati dal database
     //let codice = "lasala";
     let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM menu order by ordine").unwrap();
+    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM menu where livello=2 and attivo= 1 order by ordine").unwrap();
     
     let menus_iter = stmt.query_map([], |row| {
         Ok(Menus {
@@ -178,12 +188,35 @@ async fn menu_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     for menu in menus_iter {
         lista_menu.push(menu.unwrap());
     }
+    // SUBMENU
+    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM submenu where attivo = 1 order by ordine").unwrap();
+    
+    let submenus_iter = stmt.query_map([], |row| {
+        Ok(Submenus {
+            id: row.get(0)?,
+            codice: row.get(1)?,
+            radice: row.get(2)?,
+            livello: row.get(3)?,
+            titolo: row.get(4)?,
+            link: row.get(5)?,
+            })
+    }).unwrap();
+
+    let mut lista_submenus = Vec::new();
+    for submenus in submenus_iter {
+        lista_submenus.push(submenus.unwrap());
+    }
+
+    // 4. Passiamo la lista al template
+    //let mut context = Context::new();
+    
 
     // 4. Passiamo la lista al template
     let mut context = Context::new();
     context.insert("menus", &lista_menu);
+    context.insert("submenus", &lista_submenus);
 
-    let rendered = state.templates.render("AceMenu.html", &context).unwrap();
+    let rendered = state.templates.render("_AceMenu_.html", &context).unwrap();
     Html(rendered)
 }
 
@@ -215,8 +248,39 @@ let conn = state.db_conn.lock().unwrap();
 
     let mut context = Context::new();
     context.insert("links", &lista_links);
-
+    
+    
     let rendered = state.templates.render("about.html", &context).unwrap();
     Html(rendered)
 }
 
+/*async fn get_submenu(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // 3. Estraiamo i dati dal database
+    //let codice = "lasala";
+    let conn = state.db_conn.lock().unwrap();
+    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM submenu order by ordine").unwrap();
+    
+    let submenus_iter = stmt.query_map([], |row| {
+        Ok(Submenus {
+            id: row.get(0)?,
+            codice: row.get(1)?,
+            radice: row.get(2)?,
+            livello: row.get(3)?,
+            titolo: row.get(4)?,
+            link: row.get(5)?,
+            })
+    }).unwrap();
+
+    let mut lista_submenu = Vec::new();
+    for submenu in submenus_iter {
+        lista_submenu.push(submenu.unwrap());
+    }
+
+    // 4. Passiamo la lista al template
+    let mut context = Context::new();
+    context.insert("submenus", &lista_submenu);
+
+    let rendered = state.templates.render("AceMenu.html", &context).unwrap();
+    Html(rendered)
+}
+*/
