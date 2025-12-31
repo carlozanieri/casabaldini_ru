@@ -1,8 +1,7 @@
 [package]
-name = "casabaldini_ru"
+name = "casabaldini"
 version = "0.1.0"
 edition = "2024"
-
 [dependencies]
 axum = "0.7"
 tokio = { version = "1.0", features = ["full"] }
@@ -11,5 +10,5 @@ serde = { version = "1.0", features = ["derive"] }
 askama = "0.12"
 askama_axum = "0.4"
 tera = "1.19" # Il motore di template
-rusqlite = { version = "0.31", features = ["bundled"] } # "bundled" compila SQLite internamente
-
+#rusqlite = { version = "0.31"} # "bundled" compila SQLite internamente
+sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"]}

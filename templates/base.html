@@ -1,29 +1,51 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <link rel="stylesheet" type="text/css" href="/static/home/dist/css/slider-pro.min.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/static/home/dist/css/examples.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/staticmenu_6/css/default.css" />
+<link rel="stylesheet" type="text/css" href="/static/beb/menu_6/css/component.css" />
+	
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.2.min.js"></script>
+<script type="text/javascript" src="/static/home/dist/js/jquery.sliderPro.min.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/static/rust/style.css" />
-    <title>{% block title %}Il mio Sito{% endblock title %}</title>
+    <link rel="stylesheet" type="text/css" href="/static/home/dist/css/slider-pro.min.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/static/home/dist/css/examples.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/staticmenu_6/css/default.css" />
+<link rel="stylesheet" type="text/css" href="/static/beb/menu_6/css/component.css" />
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.2.min.js"></script>
+<script type="text/javascript" src="/static/home/dist/js/jquery.sliderPro.min.js"></script>
+    <title>{% block title %}Stefano Catani{% endblock title %}</title>
     <style>
         body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
         nav { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
         footer { margin-top: 50px; font-size: 0.8em; color: gray; }
     </style>
 </head>
-<body>
-    <nav>
-        <strong>MioSito:</strong>
-        <a href="/">Home</a> |<a href="/menu">Menu</a> | <a href="/about">About</a> | <a href="/lacasailpaese">La nostra Casa - Il Paese</a>
-    </nav>
-    </nav>
 
+<body>
+    
+        
+       
     <main>
-        {% block content %}{% endblock content %}
-    </main>
+    
+        {% block content %}
+         
+        {% endblock content %}
+        
+    </main>     
+     
+    <span style="position: absolute; margin-top: -28%;margin-left:24% ; float:left;">{% include "AceMenu.html" %}</span>
+
+  
+   <!-- <span style="position: absolute; margin-top: -28%;margin-left:2% ; float:left;">{ include "menu5.html" }</span> -->
 
     <footer>
         <p>&copy; 2025 - Creato con Rust e Tera</p>
     </footer>
+    
 </body>
 </html>

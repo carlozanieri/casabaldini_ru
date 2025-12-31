@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" >
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+		 <!--<meta name="viewport" content="width=device-width, initial-scale=1"/> -->
+	
+	<title>casabaldini.eu </title>
+
+	<meta name="author" content="Carlo Zanieri" />
+	<link rel="shortcut icon" href="/static/favicon.ico"/>
+	<link rel="stylesheet" type="text/css" href="/static/menu_6/css/default.css" />
+	<link rel="stylesheet" type="text/css" media="all" href="/static/news/css/styles.css"/>
+  	<script src="/static/js/jquery.js"></script>
+	<script type="text/javascript" src="/static/nivo-slider/js/jquery-1.7.1.min.js"></script>
+	<script src="/static/menu_6/js/modernizr.custom.js"></script>
+	<link rel="shortcut icon" href="/static/favicon.ico"/> 
+	<link rel="stylesheet" type="text/css" href="/static/menu_6/css/default.css" />
+	<link rel="stylesheet" type="text/css" href="/static/menu_6/css/component.css" />
+		
+		
+    <style>
+		.content { margin:50px auto; max-width:728px; line-height:1.7}
+    </style>
+		
+	</head>
+	
+	<body>
+		<div class="container demo-5">	
+			<!-- Codrops top bar -->
+			<div class="codrops-top clearfix">
+				
+				
+		</div>
+			
+			<div class="main clearfix">
+				<div class="column">
+					<div id="dl-menu" class="dl-menuwrapper">
+						<button class="dl-trigger"></button>
+						<ul class="dl-menu">
+							
+							{% for menuwebs in menu %}
+							<li>
+								
+								<a href="{{menuwebs.link }}" class="gn-icon gn-icon-help">{{menuwebs.titolo}}</a>
+								
+								<ul class="dl-submenu">
+									
+									{% for submenus in submenu %}
+									<li >
+											{% if menuwebs.codice == submenus.radice %}
+                        					<a href="{{submenus.link}}" ><span></span> {{submenus.titolo}}</a>
+											<input id="codice" name="codice" type="hidden" value={{submenus.codice}} />
+											{% endif %}
+									</li>
+									{% endfor %}
+									
+								</ul>
+							</li>
+							{% endfor %}
+						</ul>
+					</div><!-- /dl-menuwrapper -->
+				</div>
+			</div>
+		</div><!-- /container -->
+		
+		<script src="/static/menu_6/js/jquery.dlmenu.js"></script>
+		
+		<script>
+			$(function() {
+				$( '#dl-menu' ).dlmenu({
+					animationClasses : { classin : 'dl-animate-in-4', classout : 'dl-animate-out-4' }
+				});
+			});
+		</script>
+		
+	</body>	
+	
+</html>

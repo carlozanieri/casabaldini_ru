@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-Frame-Options" content="SAMEORIGIN"> 
+<link rel="stylesheet" type="text/css" href="/static/home/dist/css/slider-pro.min.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/static/home/dist/css/examples.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/staticmenu_6/css/default.css" />
+<link rel="stylesheet" type="text/css" href="/static/beb/menu_6/css/component.css" />
+	
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.2.min.js"></script>
+<script type="text/javascript" src="/static/home/dist/js/jquery.sliderPro.min.js"></script>
+
+<script type="text/javascript">
+	$( document ).ready(function( $ ) {
+		$( '#example1' ).sliderPro({
+			width: 960,
+			height: 500,
+			arrows: true,
+			buttons: false,
+			waitForLayers: true,
+			thumbnailWidth: 200,
+			thumbnailHeight: 100,
+			thumbnailPointer: true,
+			autoplay: true,
+			autoScaleLayers: false,
+			breakpoints: {
+				500: {
+					thumbnailWidth: 120,
+					thumbnailHeight: 50
+				}
+			}
+		});
+	});
+</script>
+
+
+	<div  id=example1 class="slider-pro">
+		<div  class="sp-slides">
+			{% for s in sliders %}
+
+	        <div  class="sp-slide">
+				<img src="/static/img/index/{{ s.img }}" alt="{{ s.titolo }}" style="max-width: 110%; height: 110%;">
+				<h3 class="sp-layer sp-black sp-padding" 
+					data-horizontal="40" data-vertical="10%" 
+					data-show-transition="left" data-hide-transition="left">
+					{{s.titolo}}
+				</h3>
+
+				<p class="sp-layer sp-white sp-padding hide-medium-screen" 
+					data-horizontal="40" data-vertical="22%" 
+					data-show-transition="left" data-show-delay="400" data-hide-transition="left" data-hide-delay="400">
+					{{s.caption}}
+				</p>
+
+				<p style="background-color:#330101;" class="sp-layer sp-black sp-padding hide-small-screen" 
+					data-horizontal="40" data-vertical="34%" data-width="650" 
+					data-show-transition="left" data-show-delay="400" data-hide-transition="left" data-hide-delay="500">
+					{{s.testo}}
+				</p>
+			</div>
+			{% endfor %}
+		</div>
+
+		
+    </div>
+    
+{% endblock content %}

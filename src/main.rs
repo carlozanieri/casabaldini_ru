@@ -1,15 +1,14 @@
 use axum::{extract::State, response::{Html, IntoResponse}, routing::get, Router};
-//use rusqlite::{params, Connection, Result};
-use rusqlite::{Connection,named_params};
-//use rusqlite::{Connection, params};
+use sqlx::{SqlitePool, FromRow};
+use std::sync::Arc;
+use tera::Tera;
 use serde::Serialize;
-use std::sync::{Arc, Mutex};
-use tera::{Context, Tera};
 use tower_http::services::ServeDir;
+
 //newuse
 
 // Definiamo la struttura dati per la tabella
-#[derive(Serialize)]
+#[derive(Serialize, FromRow)]
 struct Links{
 	id:          i32,
 	codice:      String,
@@ -21,7 +20,7 @@ struct Links{
 	height:      String,
 	width:       String,
 }
-#[derive(serde:: Serialize)]
+#[derive(Serialize, FromRow)]
 struct Slider {
      id: i64,
      codice: String,
@@ -32,16 +31,8 @@ struct Slider {
      link: String,
      testo: String,
 }
-/*#[derive(serde:: Serialize)]
-struct Submenus{
-	id:      i64,
-	codice:  String,
-	radice:  String,
-	livello: i64,
-	titolo:  String,
-	link:    String,
-}*/
-#[derive(serde:: Serialize)]
+
+#[derive(Serialize, FromRow)]
 struct Menus {
 	id:       i64,
 	codice:   String,
@@ -51,7 +42,7 @@ struct Menus {
 	link:     String,
 	
 }
-#[derive(Serialize)]
+#[derive(Serialize, FromRow)]
 struct Submenus{
 	id:       i64,
 	codice:   String,
@@ -61,226 +52,176 @@ struct Submenus{
 	link:     String,
 	
 }
+
 struct AppState {
+    db: SqlitePool,
+    //tera: tera::Tera,
     templates: Tera,
-    // Usiamo Mutex perché la connessione SQLite non è "Thread Safe" di natura
-    db_conn: Mutex<Connection>,
+    
 }
 
+#[derive(Serialize)]
+struct BaseContext {
+    menu: Vec<Menus>,
+    submenu: Vec<Submenus>,
+    links: Vec<Links>,
+    slide: Vec<Slider>,
+ 
+}
+
+
 #[tokio::main]
-async fn main() {
+async fn main()  {
     // 1. Inizializza SQLite e crea una tabella di prova
-    let db_path = "casabaldini.sqlite";
-    let conn = Connection::open(db_path).expect("Impossibile trovare o aprire il file SQLite");
-
-    //let conn = Connection::open_in_memory().expect("Errore apertura DB");
-    //conn.execute(
-    //    "CREATE TABLE utenti (id INTEGER PRIMARY KEY, nome TEXT, email TEXT)",
-    //    (),
-    //).unwrap();
-    //conn.execute("INSERT INTO utenti (nome, email) VALUES ('Mario Rossi', 'mario@example.com')", ()).unwrap();
-    //conn.execute("INSERT INTO utenti (nome, email) VALUES ('Paola Bianchi', 'paola@example.com')", ()).unwrap();
-
-    // 2. Inizializza Tera
-    let tera = Tera::new("templates/**/*").expect("Errore template");
-
+    //let db_path = "casabaldini.sqlite";
+    
+   // let tera = Tera::new("templates/**/*").expect("Errore template");
+    let templates  = Tera::new("templates/**/*").expect("Errore template");
+    let db = SqlitePool::connect("sqlite:casabaldini.sqlite").await.unwrap();
     let shared_state = Arc::new(AppState {
-        templates: tera,
-        db_conn: Mutex::new(conn),
+        db,
+        //tera,
+        templates,
     });
 
     let app = Router::new()
         .route("/", get(home_handler))
         .route("/about", get(about_handler))
+        .route("/prenotazioni", get(prenotazioni_handler))
         .route("/menu", get(menu_handler))
         .route("/lacasailpaese", get(lacasailpaese_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(shared_state);
 
     
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     println!("Server attivo su http://localhost:3000");
     axum::serve(listener, app).await.unwrap();
 }
-
+   
 async fn home_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // 3. Estraiamo i dati dal database
-    let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
+//use axum::{extract::State, response::Html};
+use tera::Context;
+ 
+let base =  get_base_context(&state.db).await;
+let codice = "index";
+//let slider: BaseContext = get_slide_context(&state.db, &codice).await?;
+
+    // 2. Crea il contesto per Tera e inserisci i dati comuni
+    let mut ctx = Context::new();
+    ctx.insert("menu", &base.menu);
+    ctx.insert("submenu", &base.submenu);
+    ctx.insert("sliders", &base.slide);
+    ctx.insert("links", &base.links);
+    ctx.insert("pagina_titolo", "Home Page");
     
-    let links_iter = stmt.query_map([], |row| {
-        Ok(Links {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            img: row.get(2)?,
-            titolo: row.get(3)?,
-            descrizione: row.get(4)?,
-            link: row.get(5)?,
-             attivo: row.get(6)?,
-            height: row.get(7)?,
-            width: row.get(8)?,
-        })
-    }).unwrap();
-
-    let mut lista_links = Vec::new();
-    for links in links_iter {
-        lista_links.push(links.unwrap());
-    }
-
-    // 4. Passiamo la lista al template
-    let mut context = Context::new();
-    context.insert("links", &lista_links);
-
-    let rendered = state.templates.render("index.html", &context).unwrap();
+    let rendered = state.templates.render("home.html", &ctx).unwrap();
     Html(rendered)
 }
 
 async fn lacasailpaese_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // 3. Estraiamo i dati dal database
-    let codice = "lasala";
-    let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, codice, codice2, img, titolo, caption, link, testo FROM beb_slider WHERE codice2 = :codice").unwrap();
     
-    let slider_iter = stmt.query_map(named_params! { ":codice": codice }, |row| {
-        Ok(Slider {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            codice2: row.get(2)?,
-            img: row.get(3)?,
-            titolo: row.get(4)?,
-            caption: row.get(5)?,
-            link: row.get(6)?,
-            testo: row.get(7)?,
-        })
-    }).unwrap();
+//use axum::{extract::State, response::Html};
+use tera::Context;
+//use std::sync::Arc;
+    let base =  get_base_context(&state.db).await;
+let codice = "index";
+//let slider: BaseContext = get_slide_context(&state.db, &codice).await?;
 
-    let mut lista_slider = Vec::new();
-    for slider in slider_iter {
-        lista_slider.push(slider.unwrap());
-    }
-
-    // 4. Passiamo la lista al template
-    let mut context = Context::new();
-    context.insert("links", &lista_slider);
-
-    let rendered = state.templates.render("slider.html", &context).unwrap();
+    // 2. Crea il contesto per Tera e inserisci i dati comuni
+    let mut ctx = Context::new();
+    ctx.insert("menu", &base.menu);
+    ctx.insert("submenu", &base.submenu);
+    ctx.insert("sliders", &base.slide);
+    ctx.insert("links", &base.links);
+    ctx.insert("pagina_titolo", "Home Page");
+    
+    let rendered = state.templates.render("slider.html", &ctx).unwrap();
     Html(rendered)
 }
 
 async fn menu_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // 3. Estraiamo i dati dal database
-    //let codice = "lasala";
-    let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM menu where livello=2 and attivo= 1 order by ordine").unwrap();
+//use axum::{extract::State, response::Html};
+use tera::Context;
+//use std::sync::Arc;
+let base =  get_base_context(&state.db).await;
+let codice = "index";
+    // 2. Crea il contesto per Tera e inserisci i dati comuni
+    let mut ctx = Context::new();
+    ctx.insert("menu", &base.menu);
+    ctx.insert("submenu", &base.submenu);
+    ctx.insert("sliders", &base.slide);
+    ctx.insert("links", &base.links);
+    // 3. Aggiungi dati specifici per questa pagina
+    ctx.insert("pagina_titolo", "Home Page");
     
-    let menus_iter = stmt.query_map([], |row| {
-        Ok(Menus {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            radice: row.get(2)?,
-            livello: row.get(3)?,
-            titolo: row.get(4)?,
-            link: row.get(5)?,
-            })
-    }).unwrap();
-
-    let mut lista_menu = Vec::new();
-    for menu in menus_iter {
-        lista_menu.push(menu.unwrap());
-    }
-    // SUBMENU
-    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM submenu where attivo = 1 order by ordine").unwrap();
-    
-    let submenus_iter = stmt.query_map([], |row| {
-        Ok(Submenus {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            radice: row.get(2)?,
-            livello: row.get(3)?,
-            titolo: row.get(4)?,
-            link: row.get(5)?,
-            })
-    }).unwrap();
-
-    let mut lista_submenus = Vec::new();
-    for submenus in submenus_iter {
-        lista_submenus.push(submenus.unwrap());
-    }
-
-    // 4. Passiamo la lista al template
-    //let mut context = Context::new();
-    
-
-    // 4. Passiamo la lista al template
-    let mut context = Context::new();
-    context.insert("menus", &lista_menu);
-    context.insert("submenus", &lista_submenus);
-
-    let rendered = state.templates.render("_AceMenu_.html", &context).unwrap();
+    let rendered = state.templates.render("AceMenu.html", &ctx).unwrap();
     Html(rendered)
 }
 
 async fn about_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // 3. Estraiamo i dati dal database
-    //let conn = state.db_conn.lock().unwrap();
-    
-let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links").unwrap();
-    
-    let links_iter = stmt.query_map([], |row| {
-        Ok(Links {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            img: row.get(2)?,
-            titolo: row.get(3)?,
-            descrizione: row.get(4)?,
-            link: row.get(5)?,
-             attivo: row.get(6)?,
-            height: row.get(7)?,
-            width: row.get(8)?,
-        })
-    }).unwrap();
-        
-    let mut lista_links = Vec::new();
-    for links in links_iter {
-        lista_links.push(links.unwrap());
-    }
+//use axum::{extract::State, response::Html};
+use tera::Context;
+ 
+let base =  get_base_context(&state.db).await;
+let codice = "index";
+//let slider: BaseContext = get_slide_context(&state.db, &codice).await?;
 
-    let mut context = Context::new();
-    context.insert("links", &lista_links);
+    // 2. Crea il contesto per Tera e inserisci i dati comuni
+    let mut ctx = Context::new();
+    ctx.insert("menu", &base.menu);
+    ctx.insert("submenu", &base.submenu);
+    ctx.insert("sliders", &base.slide);
+    ctx.insert("links", &base.links);
+    ctx.insert("pagina_titolo", "Home Page");
     
-    
-    let rendered = state.templates.render("about.html", &context).unwrap();
+    let rendered = state.templates.render("about.html", &ctx).unwrap();
     Html(rendered)
 }
 
-/*async fn get_submenu(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // 3. Estraiamo i dati dal database
-    //let codice = "lasala";
-    let conn = state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, codice,  radice, livello, titolo,link FROM submenu order by ordine").unwrap();
+async fn prenotazioni_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+//use axum::{extract::State, response::Html};
+use tera::Context;
+ 
+let base =  get_base_context(&state.db).await;
+let codice = "index";
+//let slider: BaseContext = get_slide_context(&state.db, &codice).await?;
+
+    // 2. Crea il contesto per Tera e inserisci i dati comuni
+    let mut ctx = Context::new();
+    ctx.insert("menu", &base.menu);
+    ctx.insert("submenu", &base.submenu);
+    ctx.insert("sliders", &base.slide);
+    ctx.insert("links", &base.links);
+    ctx.insert("pagina_titolo", "Home Page");
     
-    let submenus_iter = stmt.query_map([], |row| {
-        Ok(Submenus {
-            id: row.get(0)?,
-            codice: row.get(1)?,
-            radice: row.get(2)?,
-            livello: row.get(3)?,
-            titolo: row.get(4)?,
-            link: row.get(5)?,
-            })
-    }).unwrap();
-
-    let mut lista_submenu = Vec::new();
-    for submenu in submenus_iter {
-        lista_submenu.push(submenu.unwrap());
-    }
-
-    // 4. Passiamo la lista al template
-    let mut context = Context::new();
-    context.insert("submenus", &lista_submenu);
-
-    let rendered = state.templates.render("AceMenu.html", &context).unwrap();
+    let rendered = state.templates.render("prenotazioni.html", &ctx).unwrap();
     Html(rendered)
 }
-*/
+
+async fn get_base_context(pool: &SqlitePool,) -> BaseContext {
+    let menu = sqlx::query_as::<_, Menus>("SELECT id, codice,  radice, livello, titolo,link FROM menu where livello=2 and attivo= 1 order by ordine")
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+    let submenu = sqlx::query_as::<_, Submenus>("SELECT id, codice,  radice, livello, titolo,link FROM submenu where attivo = 1 order by ordine")
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+    let links = sqlx::query_as::<_, Links>("SELECT id,codice,img,titolo,descrizione,link,attivo,height,width FROM beb_links")
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+    let slide = sqlx::query_as::<_, Slider>("SELECT id, codice, codice2, img, titolo, caption, link, testo
+        FROM beb_slider
+        WHERE codice2 = 'lasala'")
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+
+    BaseContext { menu, submenu, links, slide }
+}
+
