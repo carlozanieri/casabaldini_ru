@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="X-Frame-Options" content="SAMEORIGIN"> 
@@ -11,7 +11,7 @@
 	
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.2.min.js"></script>
 <script type="text/javascript" src="/static/home/dist/js/jquery.sliderPro.min.js"></script>
-
+{% block content %}
 <script type="text/javascript">
 	$( document ).ready(function( $ ) {
 		$( '#example1' ).sliderPro({
@@ -35,9 +35,12 @@
 	});
 </script>
 
-
+	
+		<div   class="sp-slides">
+			
 	<div  id=example1 class="slider-pro">
-		<div  class="sp-slides">
+		
+			
 			{% for s in sliders %}
 
 	        <div  class="sp-slide">
@@ -62,8 +65,8 @@
 			</div>
 			{% endfor %}
 		</div>
-
+		
 		
     </div>
-    
+	
 {% endblock content %}
