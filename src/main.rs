@@ -175,7 +175,7 @@ let codice = "index";
     ctx.insert("links", &base.links);
     ctx.insert("pagina_titolo", "Home Page");
     
-    let rendered = state.templates.render("about.html", &ctx).unwrap();
+    let rendered = state.templates.render("linkutili.html", &ctx).unwrap();
     Html(rendered)
 }
 
